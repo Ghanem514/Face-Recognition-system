@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Select Matches</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        /* Animated gradient background */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(-45deg, #ff6ec4, #7873f5, #4ade80, #facc15);
+            background-size: 400% 400%;
+            animation: gradientMove 10s ease infinite;
+            padding: 30px;
+            text-align: center;
+            color: white;
+        }
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            font-size: 28px;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+        }
+
+        /* Grid for matches */
+        .match-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            max-width: 1000px;
+            margin: auto;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        /* Match card with hover pop */
+        .match-card {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            overflow: hidden;
+            padding-bottom: 15px;
+            backdrop-filter: blur(10px);
+            transform: scale(1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .match-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        /* Image styling */
+        .match-card img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        /* Match details */
+        .match-card p {
+            padding: 10px;
+            font-size: 14px;
+            color: white;
+        }
+
+        /* Checkbox with animation */
+        input[type="checkbox"] {
+            transform: scale(1.5);
+            margin-top: 5px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        input[type="checkbox"]:checked {
+            transform: scale(1.8);
+        }
+
+        /* Buttons styling */
+        button {
+            background: linear-gradient(90deg, #ff512f, #dd2476);
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            color: #fff;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 25px;
+            font-size: 16px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            margin-right: 15px;
+        }
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-3px);
+        }
+
+        /* Message styling */
+        .message {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: 700;
+            color: #00ff00; /* green for success */
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        /* Fade-in animation for page */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <h2>✨ Select Which Matches to Send ✨</h2>
+
+    {% if message %}
+        <div class="message">{{ message }}</div>
+    {% endif %}
+
+    <form action="/send_selected" method="POST" style="display: inline-block;">
+        <input type="hidden" name="email" value="{{ email }}">
+        <div class="match-container">
+            {% for match in matches %}
+                <div class="match-card">
+                    <img src="{{ url_for('static', filename='face_images/' ~ match.name) }}" alt="{{ match.name }}">
+                    <p><strong>{{ match.name }}</strong><br>Score: {{ match.score }}</p>
+                    <input type="checkbox" name="selected_matches" value="{{ match.name }}">
+                </div>
+            {% endfor %}
+        </div>
+        <button type="submit">🚀 Send Selected</button>
+    </form>
+
+    <!-- Scan Again button -->
+    <form action="{{ url_for('index') }}" method="get" style="display: inline-block;">
+        <button type="submit">🔄 Scan Again</button>
+    </form>
+</body>
+</html>

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Face Recognition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        /* Animated background */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(-45deg, #6a11cb, #2575fc, #ff512f, #dd2476);
+            background-size: 400% 400%;
+            animation: gradientMove 10s ease infinite;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px;
+        }
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Title */
+        h2 {
+            margin-bottom: 20px;
+            font-size: 28px;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+        }
+        h3 {
+            margin-top: 40px;
+        }
+
+        /* Form */
+        form {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 25px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            width: 320px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            animation: fadeIn 1s ease-in-out;
+        }
+        label {
+            font-weight: 600;
+            font-size: 14px;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0 15px 0;
+            border: none;
+            border-radius: 6px;
+            outline: none;
+            transition: box-shadow 0.3s ease;
+        }
+        input:focus {
+            box-shadow: 0 0 10px rgba(255,255,255,0.8);
+        }
+
+        /* Button */
+        button {
+            background: linear-gradient(90deg, #ff512f, #dd2476);
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            color: #fff;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-3px);
+        }
+
+        /* Camera container with overlay effects */
+        .camera-container {
+            position: relative;
+            display: inline-block;
+            margin-top: 20px;
+        }
+
+        /* Camera image with glowing border */
+        .camera-feed {
+            border: 3px solid rgba(0, 255, 200, 0.6);
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 255, 200, 0.7);
+            animation: glowPulse 2s infinite alternate;
+        }
+        @keyframes glowPulse {
+            0% { box-shadow: 0 0 10px rgba(0, 255, 200, 0.6); }
+            100% { box-shadow: 0 0 30px rgba(0, 255, 200, 1); }
+        }
+
+        /* Horizontal scan line animation */
+        .scan-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(0, 255, 200, 0.6);
+            animation: scanMove 3s linear infinite;
+        }
+        @keyframes scanMove {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+
+        /* Grid overlay for sci-fi effect */
+        .grid-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 255, 200, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 200, 0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+            border-radius: 10px;
+            pointer-events: none;
+        }
+
+        /* HUD text */
+        .hud-text {
+            position: absolute;
+            top: 10px;
+            left: 15px;
+            font-size: 14px;
+            color: #00ffc8;
+            text-shadow: 0 0 5px rgba(0, 255, 200, 0.8);
+            font-weight: bold;
+            animation: textBlink 1s infinite alternate;
+        }
+        @keyframes textBlink {
+            0% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+
+        /* Fade-in animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <h2>Face Recognition</h2>
+    <form action="/recognize" method="POST">
+        <label>Name:</label>
+        <input type="text" name="name" required>
+
+        <label>Phone:</label>
+        <input type="text" name="phone" required>
+
+        <label>Email:</label>
+        <input type="email" name="email" required>
+
+        <button type="submit">📸 Scan Face</button>
+    </form>
+
+    <h3>Live Camera</h3>
+    <div class="camera-container">
+        <img class="camera-feed" src="{{ url_for('video_feed') }}" width="400">
+        <div class="grid-overlay"></div>
+        <div class="scan-line"></div>
+        <div class="hud-text">Analyzing Face...</div>
+    </div>
+</body>
+</html>

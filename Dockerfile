@@ -1,24 +1,21 @@
-# Use a slim Python image
+# Use Python 3.7
 FROM python:3.7-slim
 
-# Install system dependencies (needed for OpenCV & InsightFace)
-RUN apt-get update && apt-get install -y \
-    build-essential cmake libgl1 libglib2.0-0 git && \
-    rm -rf /var/lib/apt/lists/*
-
+# Set working directory
 WORKDIR /app
 
-# Install Python dependencies
+# Upgrade pip
+RUN python -m pip install --upgrade pip
+
+# Copy and install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy all project files
+# Copy app files
 COPY . .
 
-# Flask listens on port 5000
+# Expose port 5000
 EXPOSE 5000
 
-# Start your app
-CMD ["python", "app7.py"]
-
-
+# Run Flask
+CMD ["python", "app.py"]

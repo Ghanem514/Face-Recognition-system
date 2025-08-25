@@ -19,4 +19,5 @@ COPY . .
 EXPOSE 5000
 
 # Start your app
-CMD ["python", "app.py"]
+CMD ["python", "app7.py"]
+

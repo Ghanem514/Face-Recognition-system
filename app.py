@@ -13,32 +13,43 @@ from email.message import EmailMessage
 app = Flask(__name__)
 app.secret_key = "your_secret_key_here"  # Needed for session
 
-STATIC_IMAGE_FOLDER = r"D:\test\static\face_images"
-STATIC_IMAGE_FOLDER = os.path.join(BASE_DIR, "static", "face_images")
+# --- Directories and files ---
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_IMAGE_FOLDER = os.path.join(BASE_DIR, "static", "calc")
+EMBEDDINGS_FILE_1 = os.path.join(BASE_DIR, "embeddingst1.pkl")
+EMBEDDINGS_FILE_2 = os.path.join(BASE_DIR, "embeddingst3.pkl")
 CSV_FILE = "user_data.csv"
-EMAIL_SENDER = "ghanemgh43@gmail.com"
-EMAIL_PASSWORD = "hngi ixss ickr jnga"
-TOP_K = 20
+
+EMAIL_SENDER = "techarabi717@gmail.com" 
+EMAIL_PASSWORD = "woli dqsd cevl oiar"
+TOP_K = 100
 
 # --- Helper to normalize filenames ---
 def normalize_name(name):
     return name.replace("_", "-").lower()
 
-# Load embeddings
-with open(EMBEDDINGS_FILE, "rb") as f:
-    data = pickle.load(f)
-embedding_list = data["embeddings"]
-name_list = data["filenames"]
+# --- Load embeddings from both files ---
+embedding_list = []
+name_list = []
 
-# Load image links
+for file in [EMBEDDINGS_FILE_1, EMBEDDINGS_FILE_2]:
+    if os.path.exists(file):
+        with open(file, "rb") as f:
+            data = pickle.load(f)
+            embedding_list.extend(data["embeddings"])
+            name_list.extend(data["filenames"])
+
+print(f"✅ Loaded {len(embedding_list)} embeddings from {len(name_list)} images")
+
+# --- Load image links ---
 with open("image_links.json", "r") as f:
     image_url_map = json.load(f)
+
 normalized_image_url_map = {normalize_name(k): v for k, v in image_url_map.items()}
 
-# FaceAnalysis
+# --- Initialize FaceAnalysis ---
 face_app = FaceAnalysis(name='antelopev2')
 face_app.prepare(ctx_id=0)
-
 camera = cv2.VideoCapture(0)
 
 # --- Helper functions ---
@@ -62,14 +73,15 @@ def send_email_with_links(receiver_email, selected_filenames):
         image_url = normalized_image_url_map.get(normalized_filename, "#")
         html_content += f"<li><b>{filename}</b><br><a href='{image_url}' target='_blank'>View Image</a></li><br>"
     html_content += "</ul>"
+
     msg.add_alternative(html_content, subtype='html')
 
     try:
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
             smtp.login(EMAIL_SENDER, EMAIL_PASSWORD)
             smtp.send_message(msg)
-            print(f"✅ Email sent to {receiver_email}")
-            return True
+        print(f"✅ Email sent to {receiver_email}")
+        return True
     except Exception as e:
         print(f"❌ Failed to send email: {e}")
         return False
@@ -124,6 +136,7 @@ def recognize():
     for face in faces:
         face_embedding = face.embedding
         similarities = cosine_similarity([face_embedding], embedding_list)[0]
+
         for idx, score in enumerate(similarities):
             if score >= 0.60:
                 filename = os.path.basename(name_list[idx])
@@ -146,6 +159,7 @@ def send_selected():
     lang = get_lang()
     selected = request.form.getlist("selected_matches")
     user_email = request.form.get("email")
+
     if selected and user_email:
         success = send_email_with_links(user_email, selected)
         if lang == "en":
@@ -156,7 +170,7 @@ def send_selected():
     else:
         return "❌ No matches selected or missing email."
 
+# --- Main ---
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
-

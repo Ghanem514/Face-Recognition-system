@@ -1,62 +1,46 @@
 import os
 import pickle
+import joblib
 import numpy as np
-import json
 from flask import Flask, render_template, request, Response, session, redirect, url_for
 import cv2
 from insightface.app import FaceAnalysis
 from sklearn.metrics.pairwise import cosine_similarity
 import csv
-import smtplib
 from email.message import EmailMessage
+import smtplib
 
 app = Flask(__name__)
-app.secret_key = "your_secret_key_here"  # Needed for session
+app.secret_key = "your_secret_key_here"
 
 # --- Directories and files ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-STATIC_IMAGE_FOLDER = os.path.join(BASE_DIR, "static", "calc")
+STATIC_IMAGE_FOLDER = os.path.join(BASE_DIR, "static", "placeholder")  # placeholder images
 EMBEDDINGS_FILE_1 = os.path.join(BASE_DIR, "embeddingst1.pkl")
-EMBEDDINGS_FILE_2 = os.path.join(BASE_DIR, "embeddingst3.pkl")
-CSV_FILE = os.path.join(BASE_DIR, "user_data.csv")
+CSV_FILE = "user_data.csv"
 
-EMAIL_SENDER = "techarabi717@gmail.com" 
-EMAIL_PASSWORD = "woli dqsd cevl oiar"
-TOP_K = 100
+EMAIL_SENDER = "youremail@gmail.com"
+EMAIL_PASSWORD = "yourpassword"
+TOP_K = 5  # limit matches for testing
 
-# Placeholder image for testing
-PLACEHOLDER_IMAGE_URL = "https://via.placeholder.com/150"
+# --- Load embeddings safely with joblib ---
+if os.path.exists(EMBEDDINGS_FILE_1):
+    try:
+        embedding_data = joblib.load(EMBEDDINGS_FILE_1)
+        embedding_list = embedding_data.get("embeddings", [])
+        name_list = embedding_data.get("filenames", [])
+        print(f"✅ Loaded {len(embedding_list)} embeddings")
+    except Exception as e:
+        print(f"❌ Failed to load embeddings: {e}")
+        embedding_list, name_list = [], []
+else:
+    print("⚠️ No embeddings file found, starting empty.")
+    embedding_list, name_list = [], []
 
-# Ensure image folder exists
-os.makedirs(STATIC_IMAGE_FOLDER, exist_ok=True)
-
-# --- Helper to normalize filenames ---
-def normalize_name(name):
-    return name.replace("_", "-").lower()
-
-# --- Load embeddings ---
-embedding_list = []
-name_list = []
-
-for file in [EMBEDDINGS_FILE_1, EMBEDDINGS_FILE_2]:
-    if os.path.exists(file):
-        with open(file, "rb") as f:
-            data = pickle.load(f)  # or joblib.load(f) if saved with joblib
-            embedding_list.extend(data["embeddings"])
-            name_list.extend(data["filenames"])
-
-print(f"✅ Loaded {len(embedding_list)} embeddings from {len(name_list)} images")
-
-# --- Load image links (map all to placeholder) ---
-with open(os.path.join(BASE_DIR, "image_links.json"), "r") as f:
-    image_url_map = json.load(f)
-
-normalized_image_url_map = {normalize_name(k): PLACEHOLDER_IMAGE_URL for k in image_url_map.keys()}
-
-# --- Initialize InsightFace ---
+# --- Initialize FaceAnalysis ---
 face_app = FaceAnalysis(name='antelopev2')
 face_app.prepare(ctx_id=0)
-camera = cv2.VideoCapture(0)  # NOTE: server webcam won't work on Render; use browser capture later
+camera = cv2.VideoCapture(0)
 
 # --- Helper functions ---
 def save_user_data(name, phone, email):
@@ -67,17 +51,18 @@ def save_user_data(name, phone, email):
             writer.writerow(['Name', 'Phone', 'Email'])
         writer.writerow([name, phone, email])
 
+def normalize_name(name):
+    return name.replace("_", "-").lower()
+
 def send_email_with_links(receiver_email, selected_filenames):
     msg = EmailMessage()
     msg["Subject"] = "Your Selected Face Matches"
     msg["From"] = EMAIL_SENDER
     msg["To"] = receiver_email
 
-    html_content = "<h2>Here are the matched faces you selected:</h2><ul>"
+    html_content = "<h2>Here are your selected matches (placeholders):</h2><ul>"
     for filename in selected_filenames:
-        normalized_filename = normalize_name(filename)
-        image_url = normalized_image_url_map.get(normalized_filename, PLACEHOLDER_IMAGE_URL)
-        html_content += f"<li><b>{filename}</b><br><a href='{image_url}' target='_blank'>View Image</a></li><br>"
+        html_content += f"<li>{filename} (placeholder)</li>"
     html_content += "</ul>"
 
     msg.add_alternative(html_content, subtype='html')
@@ -92,88 +77,46 @@ def send_email_with_links(receiver_email, selected_filenames):
         print(f"❌ Failed to send email: {e}")
         return False
 
-# --- Language switching ---
-@app.route("/switch_lang/<lang>")
-def switch_lang(lang):
-    if lang in ["en", "ar"]:
-        session['lang'] = lang
-    return redirect(request.referrer or url_for('index'))
-
-def get_lang():
-    return session.get('lang', 'en')
-
 # --- Routes ---
 @app.route("/")
 def index():
-    lang = get_lang()
-    return render_template("index.html", lang=lang)
-
-def generate_frames():
-    while True:
-        success, frame = camera.read()
-        if not success:
-            break
-        ret, buffer = cv2.imencode('.jpg', frame)
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
+    return render_template("index.html")
 
 @app.route("/video_feed")
 def video_feed():
+    def generate_frames():
+        while True:
+            success, frame = camera.read()
+            if not success:
+                break
+            ret, buffer = cv2.imencode('.jpg', frame)
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
     return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route("/recognize", methods=["POST"])
 def recognize():
-    lang = get_lang()
     user_name = request.form.get("name")
     user_phone = request.form.get("phone")
     user_email = request.form.get("email")
-
     save_user_data(user_name, user_phone, user_email)
 
-    success, frame = camera.read()
-    if not success:
-        return "Failed to capture image."
+    # Placeholder match logic
+    matches = [{"name": "Placeholder1", "score": 0.99},
+               {"name": "Placeholder2", "score": 0.95}]
 
-    faces = face_app.get(frame)
-    if not faces:
-        return "No face detected."
-
-    matches = []
-    for face in faces:
-        face_embedding = face.embedding
-        similarities = cosine_similarity([face_embedding], embedding_list)[0]
-
-        for idx, score in enumerate(similarities):
-            if score >= 0.60:
-                filename = os.path.basename(name_list[idx])
-                matches.append({
-                    "name": filename,
-                    "score": round(float(score), 2),
-                    "email": user_email
-                })
-
-    if matches:
-        matches = sorted(matches, key=lambda x: x["score"], reverse=True)[:TOP_K]
-        return render_template("matches.html", matches=matches, email=user_email, message=None, lang=lang)
-    else:
-        return render_template("no_matches.html", lang=lang)
+    return render_template("matches.html", matches=matches, email=user_email)
 
 @app.route("/send_selected", methods=["POST"])
 def send_selected():
-    lang = get_lang()
     selected = request.form.getlist("selected_matches")
     user_email = request.form.get("email")
-
     if selected and user_email:
-        success = send_email_with_links(user_email, selected)
-        message = "✅ Email sent successfully!" if success else "❌ Failed to send email."
-        if lang == "ar":
-            message = "✅ تم إرسال البريد بنجاح!" if success else "❌ فشل إرسال البريد."
-        return render_template("confirmation.html", message=message, lang=lang)
+        send_email_with_links(user_email, selected)
+        return "✅ Email sent (placeholder)"
     else:
-        return "❌ No matches selected or missing email."
+        return "❌ No selection or email"
 
-# --- Main ---
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)

@@ -14,7 +14,7 @@ app = Flask(__name__)
 app.secret_key = "your_secret_key_here"  # Needed for session
 
 STATIC_IMAGE_FOLDER = r"D:\test\static\face_images"
-EMBEDDINGS_FILE = r"D:\test\embeddingst1.pkl"
+STATIC_IMAGE_FOLDER = os.path.join(BASE_DIR, "static", "face_images")
 CSV_FILE = "user_data.csv"
 EMAIL_SENDER = "ghanemgh43@gmail.com"
 EMAIL_PASSWORD = "hngi ixss ickr jnga"
@@ -159,3 +159,4 @@ def send_selected():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+

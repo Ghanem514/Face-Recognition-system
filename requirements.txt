@@ -7,6 +7,7 @@ pip>=23.0
 setuptools>=68.0
 wheel>=0.40
 scikit-learn
+onnxruntime
 
 
 

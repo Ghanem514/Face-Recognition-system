@@ -18,39 +18,45 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_IMAGE_FOLDER = os.path.join(BASE_DIR, "static", "calc")
 EMBEDDINGS_FILE_1 = os.path.join(BASE_DIR, "embeddingst1.pkl")
 EMBEDDINGS_FILE_2 = os.path.join(BASE_DIR, "embeddingst3.pkl")
-CSV_FILE = "user_data.csv"
+CSV_FILE = os.path.join(BASE_DIR, "user_data.csv")
 
 EMAIL_SENDER = "techarabi717@gmail.com" 
 EMAIL_PASSWORD = "woli dqsd cevl oiar"
 TOP_K = 100
 
+# Placeholder image for testing
+PLACEHOLDER_IMAGE_URL = "https://via.placeholder.com/150"
+
+# Ensure image folder exists
+os.makedirs(STATIC_IMAGE_FOLDER, exist_ok=True)
+
 # --- Helper to normalize filenames ---
 def normalize_name(name):
     return name.replace("_", "-").lower()
 
-# --- Load embeddings from both files ---
+# --- Load embeddings ---
 embedding_list = []
 name_list = []
 
 for file in [EMBEDDINGS_FILE_1, EMBEDDINGS_FILE_2]:
     if os.path.exists(file):
         with open(file, "rb") as f:
-            data = pickle.load(f)
+            data = pickle.load(f)  # or joblib.load(f) if saved with joblib
             embedding_list.extend(data["embeddings"])
             name_list.extend(data["filenames"])
 
 print(f"✅ Loaded {len(embedding_list)} embeddings from {len(name_list)} images")
 
-# --- Load image links ---
-with open("image_links.json", "r") as f:
+# --- Load image links (map all to placeholder) ---
+with open(os.path.join(BASE_DIR, "image_links.json"), "r") as f:
     image_url_map = json.load(f)
 
-normalized_image_url_map = {normalize_name(k): v for k, v in image_url_map.items()}
+normalized_image_url_map = {normalize_name(k): PLACEHOLDER_IMAGE_URL for k in image_url_map.keys()}
 
-# --- Initialize FaceAnalysis ---
+# --- Initialize InsightFace ---
 face_app = FaceAnalysis(name='antelopev2')
 face_app.prepare(ctx_id=0)
-camera = cv2.VideoCapture(0)
+camera = cv2.VideoCapture(0)  # NOTE: server webcam won't work on Render; use browser capture later
 
 # --- Helper functions ---
 def save_user_data(name, phone, email):
@@ -70,7 +76,7 @@ def send_email_with_links(receiver_email, selected_filenames):
     html_content = "<h2>Here are the matched faces you selected:</h2><ul>"
     for filename in selected_filenames:
         normalized_filename = normalize_name(filename)
-        image_url = normalized_image_url_map.get(normalized_filename, "#")
+        image_url = normalized_image_url_map.get(normalized_filename, PLACEHOLDER_IMAGE_URL)
         html_content += f"<li><b>{filename}</b><br><a href='{image_url}' target='_blank'>View Image</a></li><br>"
     html_content += "</ul>"
 
@@ -140,13 +146,11 @@ def recognize():
         for idx, score in enumerate(similarities):
             if score >= 0.60:
                 filename = os.path.basename(name_list[idx])
-                normalized_filename = normalize_name(filename)
-                if normalized_filename in normalized_image_url_map:
-                    matches.append({
-                        "name": filename,
-                        "score": round(float(score), 2),
-                        "email": user_email
-                    })
+                matches.append({
+                    "name": filename,
+                    "score": round(float(score), 2),
+                    "email": user_email
+                })
 
     if matches:
         matches = sorted(matches, key=lambda x: x["score"], reverse=True)[:TOP_K]
@@ -162,9 +166,8 @@ def send_selected():
 
     if selected and user_email:
         success = send_email_with_links(user_email, selected)
-        if lang == "en":
-            message = "✅ Email sent successfully!" if success else "❌ Failed to send email."
-        else:
+        message = "✅ Email sent successfully!" if success else "❌ Failed to send email."
+        if lang == "ar":
             message = "✅ تم إرسال البريد بنجاح!" if success else "❌ فشل إرسال البريد."
         return render_template("confirmation.html", message=message, lang=lang)
     else:

@@ -1,4 +1,4 @@
-FROM python:3.7-slim
+FROM python:3.8-slim
 
 # Set working directory
 WORKDIR /app
@@ -28,3 +28,4 @@ EXPOSE 5000
 
 # Run Flask
 CMD ["python", "app.py"]
+

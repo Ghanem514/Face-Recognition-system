@@ -1,13 +1,11 @@
-Flask==2.3.2
+flask==2.3.7
+opencv-python-headless==4.8.1.78
+insightface==0.8.3
+scikit-learn==1.3.2
 numpy==1.25.2
-opencv-python==4.8.1.78
-Pillow==10.0.0
-insightface==0.7.3
-pip>=23.0
-setuptools>=68.0
-wheel>=0.40
-scikit-learn
-onnxruntime
+onnxruntime==1.15.1
+joblib==1.3.2
+
 
 
 

@@ -2,8 +2,9 @@ flask
 opencv-python-headless
 insightface
 scikit-learn
-numpy
+numpy==1.25.2 
 onnxruntime
 joblib
+
 
 

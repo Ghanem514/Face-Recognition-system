@@ -1,17 +1,26 @@
-# Use Python 3.7
 FROM python:3.7-slim
 
 # Set working directory
 WORKDIR /app
 
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libglib2.0-0 \
+    libsm6 \
+    libxrender1 \
+    libxext6 \
+    git \
+ && rm -rf /var/lib/apt/lists/*
+
 # Upgrade pip
 RUN python -m pip install --upgrade pip
 
-# Copy and install dependencies
+# Copy and install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy app files
+# Copy project files
 COPY . .
 
 # Expose port 5000

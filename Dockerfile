@@ -1,5 +1,5 @@
 # Use a slim Python image
-FROM python:3.10-slim
+FROM python:3.7-slim
 
 # Install system dependencies (needed for OpenCV & InsightFace)
 RUN apt-get update && apt-get install -y \
@@ -20,4 +20,5 @@ EXPOSE 5000
 
 # Start your app
 CMD ["python", "app7.py"]
+
 

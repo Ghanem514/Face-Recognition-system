@@ -38,7 +38,7 @@ else:
     embedding_list, name_list = [], []
 
 # --- Initialize FaceAnalysis ---
-face_app = FaceAnalysis(name='antelopev2')
+face_app = FaceAnalysis(providers=['CPUExecutionProvider'])
 face_app.prepare(ctx_id=0)
 camera = cv2.VideoCapture(0)
 
@@ -120,3 +120,4 @@ def send_selected():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+

@@ -1,4 +1,4 @@
-Python==3.7
+Python==3.7.0
 numpy==2.0.2
 flask==2.2.5
 opencv-python
@@ -6,6 +6,7 @@ insightface
 scikit-learn
 onnxruntime
 joblib==1.2.0
+
 
 
 
